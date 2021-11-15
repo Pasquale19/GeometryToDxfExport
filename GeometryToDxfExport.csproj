@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="netDxf">
+      <HintPath>..\..\..\dll\netDxf.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="if $(ConfigurationName) == Debug (&#xD;&#xA;  copy &quot;$(TargetDir)GeometryToDxfExport.dll&quot; &quot;C:\Users\Pascal\Google Drive\ProgrammierProjekte\dll\AutoExport&quot; /y&#xD;&#xA;) ELSE (&#xD;&#xA;  echo &quot;why, Microsoft, why&quot;.&#xD;&#xA;)" />
+  </Target>
+
+</Project>
