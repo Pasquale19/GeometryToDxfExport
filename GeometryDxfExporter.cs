@@ -6,11 +6,12 @@ using System.Windows;
 using System.Windows.Media;
 using netDxf.Entities;
 using Point = System.Windows.Point;
+using GeoExport;
 
 
 namespace GeometryToDxfExport
 {
-    public class GeometryDxfExporter
+    public class GeometryDxfExporter : GeoExport.GeometryExporter
     {
         #region internv variables
         int EllipsCt, FigureCt, GeoCt, LineCt;
@@ -20,7 +21,7 @@ namespace GeometryToDxfExport
         #endregion
 
         #region Properties
-        public int PathFigureIterationSteps = 1000;
+        //public int PathFigureIterationSteps = 1000;
         #endregion
 
         #region Konstruktor
@@ -40,6 +41,8 @@ namespace GeometryToDxfExport
             }
             DxfDocument doc = new DxfDocument();
             doc.AddEntity(dxfEntities);
+            string? Extension = System.IO.Path.GetExtension(file);
+            if (Extension != ".dxf") file = $"{file}.dxf";
             doc.Save(file);
         }
 
@@ -94,6 +97,7 @@ namespace GeometryToDxfExport
                     //}
                     netDxf.Entities.Polyline poly = PointsToPolyLine(pst);
                     poly.Layer = new netDxf.Tables.Layer($"figure{FigureCt}");
+                    poly.IsClosed = true;
                     FigureCt++;
                     dxfEntities.Add(poly);
                 }
@@ -108,78 +112,78 @@ namespace GeometryToDxfExport
         }
 
         //trys to iterate over PathSegment, if it only consist of lines => it collects all EdgePoints and convert it to DXF-PolyLine
-        public List<Point> getFigurePoints(PathFigure fig, out bool succesful)
-        {
+        //public List<Point> getFigurePoints(PathFigure fig, out bool succesful)
+        //{
 
-            List<Point> points = new List<Point>();
-            succesful = false;
-            points.Add(fig.StartPoint);
-            foreach (PathSegment segm in fig.Segments)
-            {
-                if (segm is LineSegment)
-                {
-                    LineSegment line = segm as LineSegment;
-                    points.Add(line.Point);
-                    continue;
-                }
-                if (segm is PolyLineSegment)
-                {
-                    PolyLineSegment polyLine = segm as PolyLineSegment;
-                    PointCollection ptc = polyLine.Points;
-                    for (int i = 0; i < ptc.Count; i++)
-                    {
-                        points.Add(ptc[i]);
-                    }
-                    continue;
-                }
-                succesful = false;
-                return new List<Point>();
-                //other types are ArcSegment,PolyBezierSegment and QuadraticBezierSegment
-            }
-            return points;
-        }
-        public List<Point> getFigurePoints(PathFigure fig, int Steps = 1000)
-        {
+        //    List<Point> points = new List<Point>();
+        //    succesful = false;
+        //    points.Add(fig.StartPoint);
+        //    foreach (PathSegment segm in fig.Segments)
+        //    {
+        //        if (segm is LineSegment)
+        //        {
+        //            LineSegment line = segm as LineSegment;
+        //            points.Add(line.Point);
+        //            continue;
+        //        }
+        //        if (segm is PolyLineSegment)
+        //        {
+        //            PolyLineSegment polyLine = segm as PolyLineSegment;
+        //            PointCollection ptc = polyLine.Points;
+        //            for (int i = 0; i < ptc.Count; i++)
+        //            {
+        //                points.Add(ptc[i]);
+        //            }
+        //            continue;
+        //        }
+        //        succesful = false;
+        //        return new List<Point>();
+        //        //other types are ArcSegment,PolyBezierSegment and QuadraticBezierSegment
+        //    }
+        //    return points;
+        //}
+        //public List<Point> getFigurePoints(PathFigure fig, int Steps = 1000)
+        //{
 
-            if (fig == null) return new List<Point>();
-            List<Point> list = new List<Point>();
-            PathGeometry geo = new PathGeometry();
-            geo.Figures.Add(fig);
-            geo = geo.GetFlattenedPathGeometry();
-            geo.GetPointAtFractionLength(0, out Point P_Start, out Point tangent);
-            Point P1;
+        //    if (fig == null) return new List<Point>();
+        //    List<Point> list = new List<Point>();
+        //    PathGeometry geo = new PathGeometry();
+        //    geo.Figures.Add(fig);
+        //    geo = geo.GetFlattenedPathGeometry();
+        //    geo.GetPointAtFractionLength(0, out Point P_Start, out Point tangent);
+        //    Point P1;
 
 
-            geo.GetPointAtFractionLength(0, out Point P0, out Point T0);
-            for (int i = 1; i < Steps; i++)
-            {
-                double progress = (double)(1d / Steps) * i;
-                geo.GetPointAtFractionLength(progress, out P1, out Point T1);
-                list.Add(P1);
+        //    geo.GetPointAtFractionLength(0, out Point P0, out Point T0);
+        //    for (int i = 1; i < Steps; i++)
+        //    {
+        //        double progress = (double)(1d / Steps) * i;
+        //        geo.GetPointAtFractionLength(progress, out P1, out Point T1);
+        //        list.Add(P1);
 
-                if (Double.IsNaN(P0.X) || Double.IsNaN(P0.Y) || Double.IsInfinity(P0.X) || Double.IsInfinity(P0.Y)) throw new Exception("invalid Coordinates");
-                P0 = P1;
-            }
-            if (fig.IsClosed)
-            {
-                list.Add(P_Start);
-            }
-            return list;
-        }
-        public List<Point> getFigurePoints(PathFigure fig)
-        {
+        //        if (Double.IsNaN(P0.X) || Double.IsNaN(P0.Y) || Double.IsInfinity(P0.X) || Double.IsInfinity(P0.Y)) throw new Exception("invalid Coordinates");
+        //        P0 = P1;
+        //    }
+        //    if (fig.IsClosed)
+        //    {
+        //        list.Add(P_Start);
+        //    }
+        //    return list;
+        //}
+        //public List<Point> getFigurePoints(PathFigure fig)
+        //{
 
-            if (fig == null) return new List<Point>();
-            List<Point> list = new List<Point>();
-            bool succes;
-            list = getFigurePoints(fig, out succes);
-            if (!succes)
-            {
-                list = getFigurePoints(fig, PathFigureIterationSteps);
-            }
+        //    if (fig == null) return new List<Point>();
+        //    List<Point> list = new List<Point>();
+        //    bool succes;
+        //    list = getFigurePoints(fig, out succes);
+        //    if (!succes)
+        //    {
+        //        list = getFigurePoints(fig, PathFigureIterationSteps);
+        //    }
 
-            return list;
-        }
+        //    return list;
+        //}
 
         #region static Conversions
         static netDxf.Entities.Polyline PointsToPolyLine(List<Point> pts, int layer = 0)
@@ -199,7 +203,7 @@ namespace GeometryToDxfExport
         }
 
 
-   
+
 
         static IEnumerable<PolylineVertex> ToPolyLineVertexes(List<Point> pts)
         {
